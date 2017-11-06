@@ -1,0 +1,157 @@
+#include <Windows.h>
+#include <GL\glew.h>
+#include <GL\freeglut.h>
+#include <iostream>
+
+using namespace std;
+static GLfloat pointsColor[3] = {0.96, 0.36, 0.24};
+
+void setPointsColor(int r, int g, int b) {
+	pointsColor[0] = (GLfloat)r / 255;
+	pointsColor[1] = (GLfloat)g / 255;
+	pointsColor[2] = (GLfloat)b / 255;
+}
+
+void drawPoint(float x, float y) {
+	glBegin(GL_POINTS);
+		glColor3f(pointsColor[0], pointsColor[1], pointsColor[2]);
+		glVertex2f((GLfloat)x, (GLfloat)y);
+	glEnd();
+}
+
+void display(){
+	glClearColor(0.58f, 0.65f, 0.65f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glPointSize(15.0);
+	glLineWidth(8.0);
+	glEnable(GL_POINT_SMOOTH);
+
+	glBegin(GL_QUADS);
+		glColor3f(0.27f, 0.1f, 0.55f);
+
+		glVertex2f(-0.5f, -0.5f);
+		glVertex2f(-0.5f, 0.5f);
+		glVertex2f(0.5f, 0.5f);
+		glVertex2f(0.5f, -0.5f);
+	glEnd();
+
+	glBegin(GL_LINES);
+	
+	glColor3f(0.2f, 0.05f, 0.23f);
+
+		glVertex2f(-1.0f, 0.0f);
+		glVertex2f(0.0f, -1.0f);
+
+		glVertex2f(0.0f, -1.0f);
+		glVertex2f(1.0f, 0.0f);
+		
+		glVertex2f(1.0f, 0.0f);
+		glVertex2f(0.0f, 1.0f);
+
+		glVertex2f(0.0f, 1.0f);
+		glVertex2f(-1.0f, 0.0f);
+	glEnd();
+
+	glBegin(GL_POINTS);
+		glColor3f(0.3f, 0.3f, 0.3f);
+	
+		glVertex2f(-1.0f, 0.0f);
+		glVertex2f(0.0f, -1.0f);
+		glVertex2f(1.0f, 0.0f);
+		glVertex2f(0.0f, 1.0f);
+
+		glColor3f(0.96f, 0.36f, 0.24f);
+
+		glVertex2f(-0.75f, 0.0f);
+		glVertex2f(0.0f, -0.75f);
+		glVertex2f(0.75f, 0.0f);
+		glVertex2f(0.0f, 0.75f);
+
+	glEnd();
+
+	glFlush();
+}
+
+/*
+setPointsColor(230, 203, 23);
+drawPoint(0.3, 0.4);*/
+
+
+void reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integer
+											   // Compute aspect ratio of the new window
+	if (height == 0) height = 1;                // To prevent divide by 0
+	GLfloat aspect = (GLfloat)width / (GLfloat)height;
+
+	// Set the viewport to cover the new window
+	glViewport(0, 0, width, height);
+
+	// Set the aspect ratio of the clipping area to match the viewport
+	glMatrixMode(GL_PROJECTION);  // To operate on the Projection matrix
+	glLoadIdentity();             // Reset the projection matrix
+	if (width >= height) {
+		// aspect >= 1, set the height from -1 to 1, with larger width
+		gluOrtho2D(-1.1 * aspect, 1.1 * aspect, -1.1, 1.1);
+	}
+	else {
+		// aspect < 1, set the width to -1 to 1, with larger height
+		gluOrtho2D(-1.1, 1.1, -1.1 / aspect, 1.1 / aspect);
+	}
+}
+
+void main(int argc, char * argv[])
+{
+	glutInit(&argc, argv);
+	//glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);//glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA); /*¬ключаем двойную буферизацию и четырехкомпонентный цвет*/
+
+	glutInitWindowPosition(200, 50);
+	glutInitWindowSize(800, 600);
+	glutCreateWindow("Drawing simple things");
+
+	glutReshapeFunc(reshape);
+	glutDisplayFunc(display);
+
+	glutMainLoop();
+
+	//return 0;
+}
+
+/*
+void changeViewPort(int w, int h)
+{
+	glViewport(0, 0, w, h);
+}
+
+void render()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glutSwapBuffers();
+}
+
+
+
+int main(int argc, char* argv[]) {
+
+	// Initialize GLUT
+	glutInit(&argc, argv);
+	// Set up some memory buffers for our display
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	// Set the window size
+	glutInitWindowSize(800, 600);
+	// Create the window with the title "Hello,GL"
+	glutCreateWindow("Hello, GL");
+	// Bind the two functions (above) to respond when necessary
+	glutReshapeFunc(changeViewPort);
+	glutDisplayFunc(render);
+
+	// Very important!  This initializes the entry points in the OpenGL driver so we can 
+	// call all the functions in the API.
+	GLenum err = glewInit();
+	if (GLEW_OK != err) {
+		fprintf(stderr, "GLEW error");
+		return 1;
+	}
+
+
+	glutMainLoop();
+	return 0;
+}*/
