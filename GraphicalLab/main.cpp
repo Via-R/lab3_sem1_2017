@@ -9,5 +9,5 @@ using namespace std;
 void main(int argc, char * argv[]){
 	glutInit(&argc, argv);
 	startPresentation();
-	
+	system("pause");
 }
