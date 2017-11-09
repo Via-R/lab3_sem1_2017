@@ -3,13 +3,19 @@
 #include "Voronoi.h"
 
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 using namespace std;
 
 
 static GLfloat pointsColor[3] = { 0.96, 0.36, 0.24 };
 static GLfloat linesColor[3] = { 0.96, 0.36, 0.24 };
-const float border = 1.0;
 
+const float border = 50.0;
+
+vector<Site> resPoints;
+vector<Point> initSites;
 
 void setPointsColor(int r, int g, int b) {
 	pointsColor[0] = (GLfloat)r / 255;
@@ -23,7 +29,12 @@ void setLinesColor(int r, int g, int b) {
 	linesColor[2] = (GLfloat)b / 255;
 }
 
-
+void setBackColor(int r, int g, int b) {
+	GLfloat r1 = (GLfloat)r / 255;
+	GLfloat g1 = (GLfloat)g / 255;
+	GLfloat b1 = (GLfloat)b / 255;
+	glClearColor(r1, g1, b1, 1.0f);
+}
 void drawPoint(float x, float y) {
 	glBegin(GL_POINTS);
 	glColor3f(pointsColor[0], pointsColor[1], pointsColor[2]);
@@ -38,19 +49,35 @@ void drawLine(float x1, float y1, float x2, float y2) {
 	glEnd();
 }
 
+
+void drawSites() {
+	setPointsColor(54, 38, 167);
+	for (auto i = initSites.cbegin(); i != initSites.cend(); ++i) {
+		drawPoint(i->x, i->y);
+	}
+}
+
+void drawResPoints() {
+	setPointsColor(255, 51, 31);
+	for (auto i = resPoints.cbegin(); i != resPoints.cend(); ++i) {
+		drawPoint(i->x, i->y);
+	}
+}
+
 void display() {
-	glClearColor(0.58f, 0.65f, 0.65f, 1.0f);
+	setBackColor(251, 251, 255);
 
 	glClear(GL_COLOR_BUFFER_BIT);
-	glPointSize(15.0);
-	glLineWidth(8.0);
+	glPointSize(8.0);
+	glLineWidth(5.0);
 	glEnable(GL_POINT_SMOOTH);
 
-	setPointsColor(37, 40, 61);
-	setLinesColor(30, 3, 120);
-	
+	//setPointsColor(37, 40, 61);
+	//setLinesColor(30, 3, 120);
+	//drawPoint(0, 0);
 	//randomize(10, 1);
-	
+	drawSites();
+	drawResPoints();
 	/*
 	float rx, ry;
 	for (int i = 0; i < 21; i++){
@@ -93,23 +120,39 @@ void keyboard(unsigned char key, int x, int y) {
 	}
 }
 
+
 void startPresentation() {
-	
-	customSet();
-	initializeQueue();
-	startAlgorithm();
+	ifstream myfile("input.txt");
+	string line;
+	if (myfile.is_open()) {
+		while (getline(myfile, line)) {
+			stringstream stream(line);
+			int x, y;
+			stream >> x;
+			stream >> y;
+			initSites.push_back(Point(x, y));
+			customSet(x, y);
+		}
 
-	//glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);//glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA); /*¬ключаем двойную буферизацию и четырехкомпонентный цвет*/
+		initializeQueue();
+		resPoints = startAlgorithm();
+		
+		
 
-	glutInitWindowPosition(200, 50);
-	glutInitWindowSize(800, 600);
-	glutCreateWindow("Drawing simple things");
-	//glutFullScreen();
-	glutReshapeFunc(reshape);
-	glutDisplayFunc(display);
-	glutKeyboardFunc(keyboard);
+		//glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);//glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA); /*¬ключаем двойную буферизацию и четырехкомпонентный цвет*/
 
-	//glutIdleFunc()
+		glutInitWindowPosition(200, 50);
+		glutInitWindowSize(800, 600);
+		glutCreateWindow("Voronoi diagram");
+		//glutFullScreen();
+		glutReshapeFunc(reshape);
+		glutDisplayFunc(display);
+		glutKeyboardFunc(keyboard);
 
-	glutMainLoop();
+		//glutIdleFunc()
+
+		glutMainLoop();
+	}
+	else cout << "Unable to open file";
 }
+

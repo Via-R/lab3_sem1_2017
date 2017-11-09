@@ -25,7 +25,7 @@ struct Event {
 
 struct Leaf {
 	Leaf(){};
-	Leaf(float a, float b, bool c, float p,int q) : x(a), y(b), isPoint(c), priority(p), n(q) {};
+	Leaf(float a, float b, bool c, int q) : x(a), y(b), isPoint(c), n(q) {};
 	Leaf(float a, float b, Point* cA, int q) : x(a), y(b), isPoint(0), corrArch(cA), n(q) {};
 	Leaf(const Event& a, int q): x(a.x), y(a.y), isPoint(0), n(q) {};
 	float x, y; 
@@ -34,15 +34,17 @@ struct Leaf {
 	int n;
 	Point toDestroy;
 	bool toDest = false;
-	float priority;
+	//float priority;
 };
 class CompareEvents {
 public:
 	bool operator()(Event a, Event b) {
 		return a.y < b.y;
+		
 	};
 	bool operator()(Site a, Site b) {
 		return a.y < b.y;
+		//return (a.y < b.y && a.x > b.x);
 	};
 };
 
@@ -51,8 +53,10 @@ typedef std::priority_queue<Site, std::vector<Site>, CompareEvents> SitesVect;
 typedef std::vector<Point> PointsVect;
 typedef std::list<Leaf> LeavesCont;
 
-void customSet();
+
+void customSet(float, float);
 void randomize(const unsigned int, const unsigned int);
 void printPoints();
 void initializeQueue();
-void startAlgorithm();
+
+std::vector<Site> startAlgorithm();
