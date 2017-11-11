@@ -15,6 +15,8 @@ LeavesCont evTree;
 PointsVect initPoints;
 
 vector<Site> diagramPoints;
+vector<Edge*> edgesVect;
+
 
 float sweepLine;
 
@@ -23,13 +25,13 @@ vector<float> falseEventsVect;
 int evCount = 0;
 /*------------------------------------------------------------------------------------*/
 bool isConvergent(float x1, float y1, float x2, float y2) {
-	cout << "\nCoords to check: \n";
+/*	cout << "\nCoords to check: \n";
 	cout << x1 << " " << y1 << endl;
 	cout << x2 << " " << y2 << endl;
-	cout << "End\n\n";
+	cout << "End\n\n";*/
 	float l1 = sqrt(x1*x1 + y1*y1);
 	float l2 = sqrt(x2*x2 + y2*y2);
-	cout << "l1: " << l1 << ", l2: " << l2 << "\n\n";
+//	cout << "l1: " << l1 << ", l2: " << l2 << "\n\n";
 	float acos1 = y1 > 0 ? acos(x1 / l1) : -acos(x1 / l1);
 	float acos2 = y2 > 0 ? acos(x2 / l2) : -acos(x2 / l2);
 	return (acos2 < acos1 && acos2 > acos1 - M_PI) ? true : false;
@@ -88,6 +90,12 @@ void printTree() {
 	for (auto i = evTree.cbegin(); i != evTree.cend(); ++i) {
 		cout << ">------------<\n";
 		cout << "IsPoint: " << i->isPoint << endl;
+		if (i->isPoint && i->corrEdge != nullptr) {
+			cout << "Edge start: " << i->corrEdge->x << ", " << i->corrEdge->y << endl;
+			if (i->corrEdge->next != nullptr) {
+				cout << "Edge end: " << i->corrEdge->next->x << ", " << i->corrEdge->next->y << endl;
+			}
+		}
 		cout << "Number: " << i->n << endl;
 		cout << "X: " << i->x << endl;
 		cout << "Y: " << i->y << endl;
@@ -98,27 +106,84 @@ void printTree() {
 
 bool comparator(Leaf i, Leaf j) { return (i.x < j.x); }
 
+/*
+void sortInitTree() {
+	auto prev = evTree.begin();
+	bool exit = false;
+	while (!exit) {
+		exit = true;
+		cout << "\nCYCLE ______________\n";
+		for (auto i = evTree.begin(); i != evTree.end(); ++i) {
+			if (i->isPoint)
+				continue;
+			if (i->x < prev->x) {
+				cout << "Before swapping: " << i->x << " " << prev->x << endl;
+				exit = false;
+				swap(*i, *prev);
+				cout << "After swapping: " << i->x << " " << prev->x << endl;
+			}
+			cout << "Iters: " << i->x << " " << prev->x << endl;
+			//printTree();
+			prev = i;
+			
+		}
+	}
+}*/
+
 void initializeQueue() {
+	float prevX;
 	for (PointsVect::const_iterator i = initPoints.cbegin(); i != initPoints.cend(); ++i) {
 		evQueue.push(Event(*i));
 	}
 	sweepLine = evQueue.top().y;
 	evTree.push_back(Leaf(evQueue.top(), evCount++));
+	prevX = evQueue.top().x;
 	evQueue.pop();
 	while (evQueue.top().y == sweepLine) {
-		evTree.push_back(Leaf(evQueue.top().x, 0, 1, -1));
+		cout << "\n\n\nNot possible\n\n\n";
+		Edge* edge2 = new Edge(evQueue.top().x, evQueue.top().y);
+		Edge* edge1 = new Edge(edge2);
+		cout << "Now: " << evQueue.top().x << ", prev: " << prevX << endl;
+		edge1->x = (evQueue.top().x + prevX)/2.;
+		edge1->y = 500;
+		edgesVect.push_back(edge1);
+		prevX = evQueue.top().x;
+		evTree.push_back(Leaf(evQueue.top().x, 0, edge2, -1));
 		evTree.push_back(Leaf(evQueue.top(), evCount++));
 		evQueue.pop();
 	}
 	prevY = sweepLine;
 	//evTree.sort(evTree.begin(), evTree.end(), comparator);
+	//sortInitTree();
 	printTree();
+}
+
+float getArchNLineIntersection(float x, float y, float lx) {
+	cout << "Arch N Line intersection started\n\n";
+	float a = 1. / (2. * y - 2. * sweepLine);
+	float b = -x / (y - sweepLine);
+	float c = (x * x + y * y - sweepLine * sweepLine) / (2. * y - 2. * sweepLine);
+	printf("x: %f, y: %f, lx: %f\na - %f, b - %f, c - %f", x, y, lx, a, b, c);
+
+	cout << "x: " << lx << endl;
+	cout << "Ended\n\n";
+	return (a * lx * lx + b * lx + c);
 }
 
 bool getArchIntersection(float x1, float y1, float x2, float y2, Point& r1, Point& r2) {
 	cout << "\n\nGetting arch intersections:\n";
 	cout << "(sweepline): " << sweepLine << endl;
 	printf("x1: %f, y1: %f, x2: %f, y2: %f\n", x1, y1, x2, y2);
+	if (fabs(y1 - sweepLine) < 0.000001) {
+		r1.x = r2.x = x1;
+		r1.y = r2.y = getArchNLineIntersection(x2, y2, x1);
+		return true;
+	}
+	else if (fabs(y2 - sweepLine) < 0.000001) {
+		r1.x = r2.x = x2;
+		r1.y = r2.y = getArchNLineIntersection(x1, y1, x2);
+		return true;
+	}
 	//ax^2 + bx + c
 	float a = 1. / (2. * y1 - 2. * sweepLine);
 	float b = -x1 / (y1 - sweepLine);
@@ -163,18 +228,6 @@ bool getArchIntersection(float x1, float y1, float x2, float y2, Point& r1, Poin
 	float x3 = -(c - p) / (b - m);
 	float y3 = n*x3*x3 + m*x3 + p;*/
 	//return Point(x3, y3);
-}
-
-float getArchNLineIntersection(float x, float y, float lx) {
-	cout << "Arch N Line intersection started\n\n";
-	float a = 1. / (2. * y - 2. * sweepLine);
-	float b = -x / (y - sweepLine);
-	float c = (x * x + y * y - sweepLine * sweepLine) / (2. * y - 2. * sweepLine);
-	printf("x: %f, y: %f, lx: %f\na - %f, b - %f, c - %f", x, y, lx, a, b, c);
-	
-	cout << "x: " << lx << endl;
-	cout << "Ended\n\n";
-	return (a * lx * lx + b * lx + c);
 }
 
 void recalculateBreakpoints() {
@@ -330,7 +383,10 @@ void pushCircleEvent(bool goRight, LeavesCont::iterator curr) {
 		if (addEvent) {
 			Arch1->toDestroy = nextCircleEv;
 			Arch1->toDest = true;
-			evQueue.push(Event(nextCircleEv, r));
+			Event temp = Event(nextCircleEv, r);
+			if (nextCircleEv.x > Arch1->x)
+				temp.remRight = true;
+			evQueue.push(temp);
 			cout << "\n                       !!!!!! circle event inserted !!!!!!\n";
 			cout << nextCircleEv.x << " - " << nextCircleEv.y << " -r- " << r << endl << endl;
 		}
@@ -354,6 +410,36 @@ bool areEqual(float a, float b, int precision) {
 	int t1 = a*pow(10, precision);
 	int t2 = b*pow(10, precision);
 	return t1 == t2;
+}
+
+void refreshEdges() {
+	for (auto i = evTree.begin(); i != evTree.end(); ++i) {
+		if (!i->isPoint)
+			continue;
+		if (i->corrEdge != nullptr) {
+			i->corrEdge->x = i->x;
+			cout << "\n ----- From " << i->corrEdge->y;
+			i->corrEdge->y = i->y;
+			cout << " to " << i->y << " on\n" << i->x << " " << i->y << endl << endl;
+		}
+	}
+}
+
+
+void printEdges() {
+	cout << "\nPrinting edges: \n";
+	for (auto i = edgesVect.cbegin(); i != edgesVect.cend(); ++i) {
+		if ((*i)->next == nullptr) {
+			cout << "Skipped\n";
+			continue;
+		}
+		printf("(%f, %f) - (%f, %f)\n", (*i)->x, (*i)->y, (*i)->next->x, (*i)->next->y);
+	}
+	cout << "End of edges print\n";
+}
+
+vector<Edge*> getEdges() {
+	return edgesVect;
 }
 
 vector<Site> startAlgorithm() {
@@ -404,16 +490,28 @@ vector<Site> startAlgorithm() {
 			++currArch;
 			Point * topArch = new Point(currArch->x, currArch->y);
 
+			Edge * sEdge = new Edge(0, 0);
+			Edge * fEdge = new Edge(sEdge);
+			edgesVect.push_back(fEdge);
+			//edgesVect.push_back(sEdge);
+
 			//evTree.insert(currArch, Leaf(evQueue.top().x, getArchNLineIntersection((*currArch).x, (*currArch).y, evQueue.top().x), true, evQueue.top().y, evCount++));
-			evTree.insert(currArch, Leaf(evQueue.top().x, getArchNLineIntersection((*currArch).x, (*currArch).y, evQueue.top().x), true, evCount++));
+			evTree.insert(currArch, Leaf(evQueue.top().x, getArchNLineIntersection((*currArch).x, (*currArch).y, evQueue.top().x), fEdge, evCount++));
 
+			//cockroach
+			//Нужно правильно определять какой из двух брейкпоинтов удалять при создании новой вершины диаграммы, перед удалением обновить
+			//координаты связанного с удаляемой вершиной ребра
 
-			evTree.insert(currArch, Leaf(evQueue.top().x, getArchNLineIntersection((*currArch).x, (*currArch).y, evQueue.top().x), true, evCount++));
+			//Написать функцию обновления координат в рёбрах - нужно чтобы при движении береговой линии и изменении брейкпоинтов эти брейкпоинты
+			//заносили свои координаты в связанные с ними рёбрами
+
+			evTree.insert(currArch, Leaf(evQueue.top().x, getArchNLineIntersection((*currArch).x, (*currArch).y, evQueue.top().x), sEdge, evCount++));
 			//evTree.insert(currArch, Leaf(evQueue.top().x, getArchNLineIntersection((*currArch).x, (*currArch).y, evQueue.top().x), true, evQueue.top().y, evCount++));
 
 			evTree.insert(--currArch, Leaf(evQueue.top().x, evQueue.top().y, topArch, evCount++));
 			//evTree.insert(--currArch, Leaf(evQueue.top().x, evQueue.top().y, topArch, evCount++));
 
+			refreshEdges();
 
 			if (evTree.size() == 1)
 				continue;
@@ -440,7 +538,7 @@ vector<Site> startAlgorithm() {
 			prevY = evQueue.top().y;
 			evQueue.pop();
 			cout << "After site event\n";
-			printTree();
+			//printTree();
 			cout << ">>> Site event end <<<\n\n";
 		}
 		else {
@@ -475,7 +573,7 @@ vector<Site> startAlgorithm() {
 
 				//Checking whether there are false events:
 				cout << "Checking whether there are false events around (" << currArch->x << "; " << currArch->y << "): " << endl;
-				printTree();
+				//printTree();
 				cout << "\nLocal counter: " << currArch->n << endl;
 				LeavesCont::iterator tt = currArch;
 				if (currArch != evTree.begin()) {
@@ -507,15 +605,83 @@ vector<Site> startAlgorithm() {
 				Site temp;
 				temp.x = currArch->toDestroy.x;
 				temp.y = currArch->toDestroy.y + evQueue.top().radius;
+
+				//Refreshing coords of edges:
+				refreshEdges();
+
+				//Setting edges:
+				/*++currArch;
+				if (currArch != evTree.end() && currArch->corrEdge != nullptr)
+					if (!currArch->corrEdge->halfDone)
+						currArch->corrEdge->halfDone = true;
+					else
+						currArch->corrEdge = nullptr;
+				--(--currArch);
+				if (currArch != evTree.begin() && currArch->corrEdge != nullptr)
+					if (!currArch->corrEdge->halfDone)
+						currArch->corrEdge->halfDone = true;
+					else
+						currArch->corrEdge = nullptr;
+				++currArch;
+				*/
+				recalculateBreakpoints();
+				refreshEdges();
+
 				//cout << "y: " << currArch->y << ", r: " << evQueue.top().radius << endl;
 				cout << "\n>>> New site: " << temp.x << ", " << temp.y << endl;
 				diagramPoints.push_back(temp);
 				cout << "Erasing (#): " << currArch->n << " (" << currArch->x << "; " << currArch->y << "), ";
+				cout << "Erase on right: " << evQueue.top().remRight << endl;
+
+				/*
 				currArch = evTree.erase(currArch);
 				--currArch;
 				cout << currArch->n << " (" << currArch->x << "; " << currArch->y << ")" << endl;
 				currArch = evTree.erase(currArch);
+				*/
 
+				if (!evQueue.top().remRight) {
+					--currArch;
+				}
+
+				Edge *temp1 = nullptr;
+				if (currArch->isPoint) {
+					temp1 = currArch->corrEdge;
+					cout << "\n\nBEFORE ERASING: " << temp1->x << " " << temp1->y << endl;
+				}
+				currArch = evTree.erase(currArch);
+				
+				if (currArch->isPoint) {
+					temp1 = currArch->corrEdge;
+					cout << "\n\nBEFORE ERASING: " << temp1->x << " " << temp1->y << endl;
+				}
+				
+				currArch = evTree.erase(currArch);
+				
+				cout << "\nAFTER: " << temp1->x << " " << temp1->y << endl;
+				
+
+				if (evQueue.top().remRight) {
+					--currArch;
+				}
+
+				//Creating new edges
+				if (currArch->x > 22)
+					cout << "\t\t\t\t\tFINDING BUGS: " << currArch->corrEdge->y << endl;
+				cout << "New edge, vertex on: " << currArch->x << ", " << currArch->y << endl;
+				//if (currArch->corrEdge->next != nullptr) {
+					currArch->corrEdge = nullptr;
+					Edge* sEdge = new Edge(0, 0);
+					Edge* fEdge = new Edge(sEdge);
+					fEdge->x = temp.x;
+					fEdge->y = temp.y;
+					currArch->corrEdge = sEdge;
+					edgesVect.push_back(fEdge);
+
+				//}
+
+
+				//Looking for new circle events
 				++currArch;
 				pushCircleEvent(false, currArch);
 				--(--currArch);
@@ -523,18 +689,25 @@ vector<Site> startAlgorithm() {
 			}
 			if (sweepLine < prevSweep)
 				recalculateBreakpoints();
-			cout << "\nAfter circle event:";
-			printTree();
+			cout << "\nAfter circle event:\n";
+			//printTree();
 			cout << ">>> Circle event end <<<\n\n";
 			prevCircleX = evQueue.top().x;
 			prevCircleY = evQueue.top().y;
 
-			cout << "\nCircle event ended, popping it out\n\n";
 			evQueue.pop();
 			
 		}
 		prevSweep = sweepLine;
 	}
+	sweepLine = -150;
+	recalculateBreakpoints();
+	refreshEdges();
+	/*for (auto i = evTree.begin(); i != evTree.end(); ++i) {
+		if(i->isPoint)
+			edgesVect.push_back(i->corrEdge);
+	}*/
 	printResults();
+	printEdges();
 	return diagramPoints;
 };

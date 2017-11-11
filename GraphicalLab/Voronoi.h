@@ -21,29 +21,44 @@ struct Event {
 	float x, y;
 	bool isCircleEvent;
 	float radius = -1;
+	bool remRight = false;
+};
+
+struct Edge {
+	Edge() {};
+	Edge(Edge* a):next(a), x(0), y(0) {};
+	Edge(float a, float b):x(a), y(b) {};
+	float x, y;
+	Edge* next = nullptr;
 };
 
 struct Leaf {
 	Leaf(){};
-	Leaf(float a, float b, bool c, int q) : x(a), y(b), isPoint(c), n(q) {};
+	Leaf(float a, float b, Edge* c, int q) : x(a), y(b), isPoint(1), n(q), corrEdge(c) {};
 	Leaf(float a, float b, Point* cA, int q) : x(a), y(b), isPoint(0), corrArch(cA), n(q) {};
 	Leaf(const Event& a, int q): x(a.x), y(a.y), isPoint(0), n(q) {};
+
 	float x, y; 
 	bool isPoint;
 	Point* corrArch = nullptr;
 	int n;
 	Point toDestroy;
 	bool toDest = false;
+	Edge * corrEdge = nullptr;
 	//float priority;
 };
+
 class CompareEvents {
 public:
 	bool operator()(Event a, Event b) {
-		return a.y < b.y;
+		if (fabs(a.y - b.y) < 0.0000000001) return a.x > b.x;
+		else return a.y < b.y;
 		
 	};
 	bool operator()(Site a, Site b) {
-		return a.y < b.y;
+		if (fabs(a.y - b.y) < 0.0000000001) return a.x > b.x;
+		else return a.y < b.y;
+		//return a.y < b.y;
 		//return (a.y < b.y && a.x > b.x);
 	};
 };
@@ -60,3 +75,5 @@ void printPoints();
 void initializeQueue();
 
 std::vector<Site> startAlgorithm();
+
+std::vector<Edge*> getEdges();

@@ -16,6 +16,7 @@ const float border = 50.0;
 
 vector<Site> resPoints;
 vector<Point> initSites;
+vector<Edge*> resEdges;
 
 void setPointsColor(int r, int g, int b) {
 	pointsColor[0] = (GLfloat)r / 255;
@@ -64,6 +65,14 @@ void drawResPoints() {
 	}
 }
 
+void drawEdges() {
+	setLinesColor(27, 153, 139);
+	for (auto i = resEdges.cbegin(); i != resEdges.cend(); ++i) {
+		if ((*i)->next != nullptr)
+			drawLine((*i)->x, (*i)->y, (*i)->next->x, (*i)->next->y);
+	}
+}
+
 void display() {
 	setBackColor(251, 251, 255);
 
@@ -77,6 +86,7 @@ void display() {
 	//drawPoint(0, 0);
 	//randomize(10, 1);
 	drawSites();
+	drawEdges();
 	drawResPoints();
 	/*
 	float rx, ry;
@@ -137,7 +147,7 @@ void startPresentation() {
 		initializeQueue();
 		resPoints = startAlgorithm();
 		
-		
+		resEdges = getEdges();
 
 		//glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);//glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA); /*¬ключаем двойную буферизацию и четырехкомпонентный цвет*/
 
