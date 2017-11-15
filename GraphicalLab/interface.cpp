@@ -137,7 +137,7 @@ void startPresentation() {
 	if (myfile.is_open()) {
 		while (getline(myfile, line)) {
 			stringstream stream(line);
-			int x, y;
+			float x, y;
 			stream >> x;
 			stream >> y;
 			initSites.push_back(Point(x, y));

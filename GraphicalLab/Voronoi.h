@@ -50,8 +50,14 @@ struct Leaf {
 
 class CompareEvents {
 public:
-	bool operator()(Event a, Event b) {
-		if (fabs(a.y - b.y) < 0.0000000001) return a.x > b.x;
+	bool operator()(Event a, Event b) {		
+		if (fabs(a.y - b.y) < 0.0000000001) {
+			if (a.isCircleEvent && !b.isCircleEvent)
+				return false;
+			if (!a.isCircleEvent && b.isCircleEvent)
+				return true;
+			return a.x > b.x;
+		}
 		else return a.y < b.y;
 		
 	};

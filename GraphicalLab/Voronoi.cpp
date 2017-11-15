@@ -87,6 +87,7 @@ void printPoints() {
 
 void printTree() {
 	cout << "\n\nEvents tree:\n";
+	cout << "Elements quantity: " << evTree.size() << endl;
 	for (auto i = evTree.cbegin(); i != evTree.cend(); ++i) {
 		cout << ">------------<\n";
 		cout << "IsPoint: " << i->isPoint << endl;
@@ -132,15 +133,27 @@ void sortInitTree() {
 
 void initializeQueue() {
 	float prevX;
+	cout << "QUEUE INIT\n";
+	vector<float>xs;
+	float counter = 1;
 	for (PointsVect::const_iterator i = initPoints.cbegin(); i != initPoints.cend(); ++i) {
+		cout << i->x << " " << i->y << endl;
+		/*if (find(xs.begin(), xs.end(), i->y) == xs.end()) {
+			xs.push_back(i->y);
+			evQueue.push(Event(*i));
+		}
+		else {
+			Event temp(i->x, i->y + 0.01*counter++, 0);
+			evQueue.push(temp);
+		}*/
 		evQueue.push(Event(*i));
+
 	}
 	sweepLine = evQueue.top().y;
 	evTree.push_back(Leaf(evQueue.top(), evCount++));
 	prevX = evQueue.top().x;
 	evQueue.pop();
-	while (evQueue.top().y == sweepLine) {
-		cout << "\n\n\nNot possible\n\n\n";
+	while (evQueue.size() && evQueue.top().y == sweepLine) {
 		Edge* edge2 = new Edge(evQueue.top().x, evQueue.top().y);
 		Edge* edge1 = new Edge(edge2);
 		cout << "Now: " << evQueue.top().x << ", prev: " << prevX << endl;
@@ -156,6 +169,7 @@ void initializeQueue() {
 	//evTree.sort(evTree.begin(), evTree.end(), comparator);
 	//sortInitTree();
 	printTree();
+	cout << "EVENTS QUANTITY: " << evQueue.size() <<endl;
 }
 
 float getArchNLineIntersection(float x, float y, float lx) {
@@ -413,6 +427,7 @@ bool areEqual(float a, float b, int precision) {
 }
 
 void refreshEdges() {
+	cout << "Refreshing edges\n\n";
 	for (auto i = evTree.begin(); i != evTree.end(); ++i) {
 		if (!i->isPoint)
 			continue;
@@ -446,14 +461,27 @@ vector<Site> startAlgorithm() {
 	int ccc = 0;
 	float prevSweep;
 	
-	float prevCircleX = evQueue.top().x, prevCircleY = evQueue.top().y;
+	float prevCircleX, prevCircleY;
+	if (evQueue.size()) {
+		prevCircleX = evQueue.top().x;
+		prevCircleY = evQueue.top().y;
+	}
+
+	float pX = 999, pY = 999;
+	bool pC = false;
+
 	while (evQueue.size()) {
 		sweepLine = evQueue.top().y;
 		LeavesCont::iterator currArch;
 		
 		if (!evQueue.top().isCircleEvent) {
-
-			cout << ">>> Site event on: " << evQueue.top().x << ",  " << evQueue.top().y << "<<<\n\n";
+			cout << pX << " " << pY << " " << pC << endl;
+			cout << (evQueue.top().x == pX && evQueue.top().y == pY && evQueue.top().isCircleEvent == pC) << endl;
+			if (evQueue.top().x == pX && evQueue.top().y == pY && evQueue.top().isCircleEvent == pC) {
+				evQueue.pop();
+				continue;
+			}
+			cout << "\t\t\t\t\t\t>>> Site event on: " << evQueue.top().x << ",  " << evQueue.top().y << ", in queue: "<< evQueue.size() <<"<<<\n\n";
 			if (evTree.size() == 1)
 				currArch = evTree.begin();
 			else {
@@ -466,6 +494,7 @@ vector<Site> startAlgorithm() {
 					cout << "No recalculations\n";
 				}
 				currArch = getArchToBreak();
+				cout << "\t\t\t\t\t\tIMPORT: " << currArch->x << " " << currArch->y << endl;
 				if (currArch != evTree.end()) {
 					//cout << "Those are coordinates of arch to break: " << currArch->x << ", " << currArch->y << endl;
 				}
@@ -504,7 +533,6 @@ vector<Site> startAlgorithm() {
 
 			//Написать функцию обновления координат в рёбрах - нужно чтобы при движении береговой линии и изменении брейкпоинтов эти брейкпоинты
 			//заносили свои координаты в связанные с ними рёбрами
-
 			evTree.insert(currArch, Leaf(evQueue.top().x, getArchNLineIntersection((*currArch).x, (*currArch).y, evQueue.top().x), sEdge, evCount++));
 			//evTree.insert(currArch, Leaf(evQueue.top().x, getArchNLineIntersection((*currArch).x, (*currArch).y, evQueue.top().x), true, evQueue.top().y, evCount++));
 
@@ -520,8 +548,13 @@ vector<Site> startAlgorithm() {
 			//cout << "!!!" << currArch->n << endl;
 
 			//Проверка на наличие 3 арок справа в списке
-			
-			
+			printTree();
+			cout << "\nChecking on new circle events\n";
+
+			pX = evQueue.top().x;
+			pY = evQueue.top().y;
+			pC = evQueue.top().isCircleEvent;
+
 			pushCircleEvent(true, currArch);
 
 			//Проверка на наличие 3 арок слева в списке
@@ -536,17 +569,21 @@ vector<Site> startAlgorithm() {
 			//Тут скорее всего просто добавить ссылку на арку слева и арку справа (по ситуации) и находить  функцией 
 			//пересечение + обновлять соседние ячейки-листы-брейкпоинты
 			prevY = evQueue.top().y;
+			
+			//cout << "\t\t\t\t\t\tK0-" << evQueue.top().isCircleEvent << endl;
+
 			evQueue.pop();
 			cout << "After site event\n";
+			cout << evQueue.size() << endl;
 			//printTree();
-			cout << ">>> Site event end <<<\n\n";
+			cout << "\t\t\t\t\t\t>>> Site event end <<<\n\n";
 		}
 		else {
 			++ccc;
 			cout << "CHECKING: \n";
 			cout << /*setprecision(10) << */"prev: " << prevCircleX << " " << prevCircleY << endl;
 			cout << "curr: " << evQueue.top().x << " " << evQueue.top().y << endl << endl;
-			if (areEqual(prevCircleX, evQueue.top().x, 4) && areEqual(prevCircleY, evQueue.top().y, 4)) {
+			if (areEqual(prevCircleX, evQueue.top().x, 6) && areEqual(prevCircleY, evQueue.top().y, 6)) {
 				cout << "\nSame event found, continuing on "<<ccc<<"\n\n";
 				evQueue.pop();
 				continue;
@@ -569,8 +606,10 @@ vector<Site> startAlgorithm() {
 			}
 
 			if (currArch != evTree.end()) {
-
-
+				recalculateBreakpoints();
+				refreshEdges();
+				cout << "\n\nPrinting tree, circle event began:\n\n";
+				printTree();
 				//Checking whether there are false events:
 				cout << "Checking whether there are false events around (" << currArch->x << "; " << currArch->y << "): " << endl;
 				//printTree();
@@ -700,6 +739,7 @@ vector<Site> startAlgorithm() {
 		}
 		prevSweep = sweepLine;
 	}
+	cout << "\n\n>>> HEY THE CYCLE IS EMPTY DOING FINAL PREPARATIONS <<<\n\n";
 	sweepLine = -150;
 	recalculateBreakpoints();
 	refreshEdges();
@@ -709,5 +749,6 @@ vector<Site> startAlgorithm() {
 	}*/
 	printResults();
 	printEdges();
+	printPoints();
 	return diagramPoints;
 };
