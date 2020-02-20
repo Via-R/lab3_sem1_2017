@@ -1,4 +1,7 @@
 # Voronoi diagram
+
+![Screenshot of the resulting diagram window](screen.png)
+
 This labwork implements the process of building the Voronoi diagram using sweep line method on predefined points
 ## How to test
 In order to test the labwork, you need MS Visual Studio C++ installed, then clone the repository using
